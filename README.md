@@ -72,16 +72,3 @@ uvicorn app:app --host 0.0.0.0 --port 8000
 
 Then you can open the public URL from anywhere, including your **phone**, with full interactivity.
 
-## 4. What You Can Screenshot / Show
-
-- Top cards: state, trust score, burnout risk, live typing metrics
-- Burnout risk line chart (behavioural trend)
-- Event log with state + trust + burnout + features
-- "System status: Online/Offline" and adaptive insights
-
-These cover the patent review email's requirements for:
-
-- **Implemented modules screenshots**
-- **Real-time logs + trust-score values**
-- **Behavioural-trend visualisations**
-- **Representative outputs from simulations / initial runs**
