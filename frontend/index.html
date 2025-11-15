@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cognitive-Biometric Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      background: radial-gradient(circle at top, #1f2937 0, #020617 55%, #000 100%);
+      color: #e5e7eb;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .glass {
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+    }
+    .badge {
+      border-radius: 9999px;
+      padding: 0.15rem 0.6rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div class="max-w-6xl mx-auto py-8 px-4">
+    <header class="mb-6 flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-bold tracking-tight text-sky-100">Cognitive-Biometric Command Center</h1>
+        <p class="text-slate-400 text-sm mt-1">
+          Real-time behavioural analytics · Trust & burnout prediction · Adaptive UI readiness
+        </p>
+      </div>
+      <div class="text-right">
+        <div class="text-xs uppercase tracking-widest text-slate-400">System status</div>
+        <div id="system-status" class="text-sm font-semibold text-emerald-400">Connecting…</div>
+      </div>
+    </header>
+
+    <section class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div class="glass rounded-2xl p-4 shadow-lg flex flex-col justify-between">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs uppercase tracking-wide text-slate-400">Current State</span>
+          <span id="state-badge" class="badge bg-slate-700 text-slate-200">initializing</span>
+        </div>
+        <div id="state-title" class="text-2xl font-semibold text-sky-300">Initializing…</div>
+        <p id="state-desc" class="text-xs text-slate-400 mt-1">
+          Waiting for baseline data.
+        </p>
+      </div>
+
+      <div class="glass rounded-2xl p-4 shadow-lg flex flex-col justify-between">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs uppercase tracking-wide text-slate-400">Trust Score</span>
+          <span class="text-[10px] text-slate-500">Identity consistency</span>
+        </div>
+        <div class="flex items-end gap-2">
+          <div id="trust-score" class="text-3xl font-semibold text-emerald-400">50.0</div>
+          <span class="text-slate-500 text-xs mb-1">/ 100</span>
+        </div>
+        <div class="w-full bg-slate-800 rounded-full h-2 mt-2 overflow-hidden">
+          <div id="trust-bar" class="h-2 rounded-full bg-gradient-to-r from-emerald-400 to-sky-400" style="width: 50%;"></div>
+        </div>
+        <p id="trust-label" class="text-xs text-slate-400 mt-1">Learning your baseline behaviour…</p>
+      </div>
+
+      <div class="glass rounded-2xl p-4 shadow-lg flex flex-col justify-between">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs uppercase tracking-wide text-slate-400">Burnout Risk</span>
+          <span class="text-[10px] text-slate-500">Short-term forecast</span>
+        </div>
+        <div class="flex items-end gap-2">
+          <div id="burnout-score" class="text-3xl font-semibold text-amber-400">0.0</div>
+          <span class="text-slate-500 text-xs mb-1">%</span>
+        </div>
+        <div class="w-full bg-slate-800 rounded-full h-2 mt-2 overflow-hidden">
+          <div id="burnout-bar" class="h-2 rounded-full bg-gradient-to-r from-emerald-400 via-amber-400 to-rose-500" style="width: 0%;"></div>
+        </div>
+        <p id="burnout-label" class="text-xs text-slate-400 mt-1">Monitoring multi-signal stress indicators…</p>
+      </div>
+
+      <div class="glass rounded-2xl p-4 shadow-lg flex flex-col justify-between">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs uppercase tracking-wide text-slate-400">Live Typing Metrics</span>
+          <span class="text-[10px] text-slate-500">Rolling window</span>
+        </div>
+        <ul class="text-xs text-slate-300 space-y-1">
+          <li><span class="text-slate-500">Keys/min:</span> <span id="kpm-val" class="font-mono">0.0</span></li>
+          <li><span class="text-slate-500">Backspace ratio:</span> <span id="backspace-val" class="font-mono">0.000</span></li>
+          <li><span class="text-slate-500">App switches/min:</span> <span id="switch-val" class="font-mono">0.0</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+      <div class="glass rounded-2xl p-4 shadow-lg lg:col-span-2">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-sm font-semibold text-slate-200">Burnout Risk Timeline</h2>
+          <span class="text-[10px] text-slate-500">Recent intervals</span>
+        </div>
+        <canvas id="burnoutChart" height="120"></canvas>
+      </div>
+
+      <div class="glass rounded-2xl p-4 shadow-lg">
+        <h2 class="text-sm font-semibold text-slate-200 mb-2">Adaptive Insight</h2>
+        <ul id="insight-list" class="text-xs text-slate-300 list-disc list-inside space-y-1">
+          <li>Baseline modelling in progress.</li>
+          <li>Stay active for a few minutes to calibrate.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="glass rounded-2xl p-4 shadow-lg">
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="text-sm font-semibold text-slate-200">Event Log</h2>
+        <span class="text-[10px] text-slate-500">Most recent first</span>
+      </div>
+      <div id="log-container" class="h-40 overflow-y-auto text-xs font-mono text-slate-300 space-y-1 pr-2"></div>
+    </section>
+  </div>
+
+  <script>
+    const stateTitle = document.getElementById("state-title");
+    const stateDesc = document.getElementById("state-desc");
+    const stateBadge = document.getElementById("state-badge");
+    const trustScoreEl = document.getElementById("trust-score");
+    const trustBar = document.getElementById("trust-bar");
+    const trustLabel = document.getElementById("trust-label");
+    const burnoutScoreEl = document.getElementById("burnout-score");
+    const burnoutBar = document.getElementById("burnout-bar");
+    const burnoutLabel = document.getElementById("burnout-label");
+    const kpmVal = document.getElementById("kpm-val");
+    const backspaceVal = document.getElementById("backspace-val");
+    const switchVal = document.getElementById("switch-val");
+    const logContainer = document.getElementById("log-container");
+    const insightList = document.getElementById("insight-list");
+    const systemStatus = document.getElementById("system-status");
+
+    let burnoutChart;
+    const burnoutCtx = document.getElementById("burnoutChart").getContext("2d");
+    burnoutChart = new Chart(burnoutCtx, {
+      type: "line",
+      data: {
+        labels: [],
+        datasets: [
+          {
+            label: "Burnout Risk (%)",
+            data: [],
+            borderColor: "#f97316",
+            backgroundColor: "rgba(248, 113, 22, 0.15)",
+            tension: 0.25,
+            pointRadius: 0,
+            borderWidth: 2,
+          },
+        ],
+      },
+      options: {
+        plugins: {
+          legend: { display: false },
+        },
+        scales: {
+          y: {
+            min: 0,
+            max: 100,
+            grid: { color: "rgba(148, 163, 184, 0.25)" },
+            ticks: { color: "#9ca3af", font: { size: 10 } },
+          },
+          x: {
+            grid: { display: false },
+            ticks: { display: false },
+          },
+        },
+      },
+    });
+
+    function describeState(state) {
+      switch (state) {
+        case "deep_focus":
+          return {
+            title: "Deep Focus",
+            desc: "Stable, rhythmic typing with minimal context switching.",
+            badgeClass: "bg-emerald-600/40 text-emerald-200",
+          };
+        case "anxious_scatter":
+          return {
+            title: "Anxious Scatter",
+            desc: "High error rate and frequent app switching detected.",
+            badgeClass: "bg-rose-600/40 text-rose-100",
+          };
+        case "fatigued":
+          return {
+            title: "Fatigued",
+            desc: "Reduced activity and slowed interactions observed.",
+            badgeClass: "bg-amber-600/40 text-amber-100",
+          };
+        case "normal":
+          return {
+            title: "Normal",
+            desc: "Typical working pattern within baseline range.",
+            badgeClass: "bg-slate-700 text-slate-100",
+          };
+        default:
+          return {
+            title: "Initializing…",
+            desc: "Collecting data to learn your baseline behaviour.",
+            badgeClass: "bg-slate-700 text-slate-100",
+          };
+      }
+    }
+
+    function describeTrust(trust) {
+      if (trust < 30) return "Low identity confidence – behaviour deviates significantly from baseline.";
+      if (trust < 60) return "Moderate trust – some deviation from enrolled behavioural profile.";
+      if (trust < 85) return "High trust – behaviour consistent with enrolled user.";
+      return "Very high trust – strong behavioural match.";
+    }
+
+    function describeBurnout(score) {
+      if (score < 25) return "No immediate burnout indicators. Maintain healthy work cadence.";
+      if (score < 50) return "Mild strain – keep an eye on breaks and workload.";
+      if (score < 75) return "Elevated risk – consider micro-breaks and reducing multitasking.";
+      return "High burnout risk – strongly recommended to re-balance tasks and rest.";
+    }
+
+    function updateInsights(state, burnout) {
+      insightList.innerHTML = "";
+      const items = [];
+
+      if (state === "deep_focus") {
+        items.push("System has shifted into 'Deep Focus' mode.");
+        items.push("Suggestion: Silence non-critical channels to maintain flow.");
+      } else if (state === "anxious_scatter") {
+        items.push("Patterns suggest context overload and rapid task switching.");
+        items.push("Suggestion: Group notifications and focus on a single task for 20–30 minutes.");
+      } else if (state === "fatigued") {
+        items.push("Indicators of fatigue detected in recent intervals.");
+        items.push("Suggestion: Short movement break and hydration before continuing.");
+      } else if (state === "normal") {
+        items.push("Behaviour is within normal operating range.");
+        items.push("The system will keep tracking for early deviations.");
+      } else {
+        items.push("Baseline still stabilising. More interaction data will improve accuracy.");
+      }
+
+      if (burnout > 60) {
+        items.push("Burnout forecast is elevated. Consider reprioritising non-urgent tasks.");
+      }
+
+      for (const text of items) {
+        const li = document.createElement("li");
+        li.textContent = text;
+        insightList.appendChild(li);
+      }
+    }
+
+    function prependLogLine(text) {
+      const line = document.createElement("div");
+      line.textContent = text;
+      logContainer.prepend(line);
+    }
+
+    async function fetchStatus() {
+      try {
+        const res = await fetch("/api/status");
+        if (!res.ok) throw new Error("Bad status");
+        const data = await res.json();
+        systemStatus.textContent = "Online";
+        systemStatus.className = "text-emerald-400 text-sm font-semibold";
+
+        const stateInfo = describeState(data.current_state);
+        stateTitle.textContent = stateInfo.title;
+        stateDesc.textContent = stateInfo.desc;
+        stateBadge.textContent = data.current_state;
+        stateBadge.className = "badge " + stateInfo.badgeClass;
+
+        const trust = data.trust_score || 0;
+        trustScoreEl.textContent = trust.toFixed(1);
+        trustBar.style.width = Math.max(5, Math.min(100, trust)).toFixed(0) + "%";
+        trustLabel.textContent = describeTrust(trust);
+
+        const burnout = data.burnout_risk || 0;
+        burnoutScoreEl.textContent = burnout.toFixed(1);
+        burnoutBar.style.width = Math.max(0, Math.min(100, burnout)).toFixed(0) + "%";
+        burnoutLabel.textContent = describeBurnout(burnout);
+
+        const feats = data.last_features || {};
+        kpmVal.textContent = (feats.keys_per_min || 0).toFixed(1);
+        backspaceVal.textContent = (feats.backspace_ratio || 0).toFixed(3);
+        switchVal.textContent = (feats.app_switches_per_min || 0).toFixed(1);
+
+        updateInsights(data.current_state, burnout);
+
+        const history = data.history || [];
+        burnoutChart.data.labels = history.map((h, idx) => idx + 1);
+        burnoutChart.data.datasets[0].data = history.map(h => h.burnout_risk || 0);
+        burnoutChart.update("none");
+
+        const ts = new Date().toLocaleTimeString();
+        prependLogLine(
+          `[${ts}] state=${data.current_state}, trust=${trust.toFixed(1)}, burnout=${burnout.toFixed(
+            1
+          )}, kpm=${(feats.keys_per_min || 0).toFixed(1)}, backspace=${(feats.backspace_ratio || 0).toFixed(
+            3
+          )}, switches=${(feats.app_switches_per_min || 0).toFixed(1)}`
+        );
+      } catch (e) {
+        systemStatus.textContent = "Offline";
+        systemStatus.className = "text-rose-400 text-sm font-semibold";
+      }
+    }
+
+    fetchStatus();
+    setInterval(fetchStatus, 2000);
+  </script>
+</body>
+</html>
